@@ -1,0 +1,29 @@
+{
+  "name": "jira-ado-traceability",
+  "version": "1.0.0",
+  "description": "Generate comprehensive traceability reports between Jira issues and Azure DevOps work items with status, severity, and assignee comparison",
+  "author": "Claude Code",
+  "tags": ["jira", "azure-devops", "traceability", "reporting", "integration"],
+  "type": "project",
+  "requirements": {
+    "python_packages": ["pandas", "openpyxl", "requests"],
+    "permissions": ["read", "write", "bash", "web"]
+  },
+  "configuration": {
+    "reusable": true,
+    "interactive": true,
+    "requires_credentials": true
+  },
+  "outputs": {
+    "primary": "Excel report (.xlsx)",
+    "format": "Jira_ADO_Traceability_Report.xlsx"
+  },
+  "use_cases": [
+    "Track Jira-ADO work item linkage",
+    "Identify status synchronization issues",
+    "Audit severity alignment between systems",
+    "Monitor assignee consistency",
+    "Generate UAT traceability reports",
+    "Compliance and audit reporting"
+  ]
+}
