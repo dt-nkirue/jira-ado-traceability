@@ -1,15 +1,18 @@
 # Jira-ADO Traceability System
 
-A comprehensive Python-based tool for generating traceability reports between Jira issues and Azure DevOps (TFS) work items with intelligent fuzzy matching for unlinked items.
+A comprehensive Python-based tool for generating traceability reports between Jira issues and Azure DevOps (TFS) work items with intelligent fuzzy matching for unlinked items. **Now includes scheduled robot capabilities!**
 
 ## 🎯 Features
 
+- **Automated Scheduling** 🤖 - Run reports on a schedule using Windows Task Scheduler
+- **Secure Configuration** - Environment variable support for credentials
+- **Detailed Logging** - Timestamped logs for monitoring and troubleshooting
+- **Error Handling** - Retry logic and graceful failure handling
 - **Automated Data Fetching** - Connects to both Jira Cloud and Azure DevOps/TFS APIs
 - **Comprehensive Comparison** - Analyzes status, severity, and assignee alignment
 - **Fuzzy Matching** - Intelligent title-based matching for unlinked items (≥70% confidence)
 - **Excel Report Generation** - Creates detailed 7-sheet Excel reports
 - **Visual Analytics** - Color-coded sheets with formatted data
-- **Reusable Configuration** - Save credentials for repeated runs
 
 ## 📊 Report Sheets
 
@@ -63,20 +66,30 @@ ADO_PAT = "your-ado-personal-access-token"
 
 ### Usage
 
-**Option 1: Python Command**
+**Option 1: Manual Run**
 ```bash
 python jira_ado_traceability.py
 ```
 
-**Option 2: Batch File (Windows)**
+**Option 2: Scheduled Robot (Recommended for Automation)**
 ```bash
-run_traceability_report.bat
+# One-time setup (see SETUP_INSTRUCTIONS.md for details)
+copy config.example.json config.json
+# Edit config.json with your settings
+
+# Test manual run
+python jira_ado_traceability_scheduled.py
+
+# Schedule with Windows Task Scheduler
+# Use the batch file: run_traceability_robot.bat
 ```
 
 **Option 3: Claude Code Skill**
 ```
 skill: jira-ado-traceability
 ```
+
+**📋 For complete scheduling setup, see [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md)**
 
 ## 📋 What Gets Tracked
 
@@ -117,23 +130,71 @@ The tool uses intelligent fuzzy matching to suggest potential links:
 
 ```
 jira-ado-traceability-project/
-├── jira_ado_traceability.py       # Main Python script
-├── run_traceability_report.bat    # Windows batch launcher
-├── requirements.txt                # Python dependencies
-├── README.md                       # This file
-├── LICENSE                         # MIT License
-├── .gitignore                      # Git ignore rules
-├── skill/                          # Claude Code skill files
-│   ├── skill.md                    # Skill documentation
-│   ├── prompt.md                   # Skill instructions
-│   ├── skill.json                  # Skill configuration
-│   ├── README.md                   # Skill README
-│   └── traceability_template.py   # Template script
-└── docs/                           # Additional documentation
-    ├── SETUP.md                    # Setup guide
-    ├── USAGE.md                    # Usage guide
-    └── TROUBLESHOOTING.md          # Troubleshooting guide
+├── jira_ado_traceability.py              # Original manual script
+├── jira_ado_traceability_scheduled.py    # Scheduled robot version (NEW!)
+├── run_traceability_robot.bat            # Windows batch wrapper for robot
+├── config.example.json                   # Example configuration (NEW!)
+├── config.json                           # Your configuration (create this)
+├── SETUP_INSTRUCTIONS.md                 # Complete scheduling guide (NEW!)
+├── requirements.txt                      # Python dependencies
+├── README.md                             # This file
+└── skill/                                # Claude Code skill files
+    ├── skill.md                          # Skill documentation
+    ├── prompt.md                         # Skill instructions
+    ├── skill.json                        # Skill configuration
+    ├── README.md                         # Skill README
+    └── traceability_template.py          # Template script
 ```
+
+## 🤖 Scheduled Robot Features
+
+The scheduled robot version (`jira_ado_traceability_scheduled.py`) includes:
+
+### Key Enhancements
+- **Configuration File** - JSON-based configuration instead of hardcoded values
+- **Environment Variables** - Secure credential management via env vars
+- **Comprehensive Logging** - Detailed logs with timestamps for each execution
+- **Error Handling** - Retry logic for API calls, graceful failure handling
+- **Exit Codes** - Proper exit codes for monitoring (0=success, 1=failure)
+- **Timestamped Reports** - Reports with timestamps to track execution history
+- **Modular Design** - Class-based architecture for maintainability
+
+### Quick Robot Setup
+
+1. **Create config file:**
+   ```bash
+   copy config.example.json config.json
+   # Edit with your settings
+   ```
+
+2. **Set environment variable (recommended):**
+   ```cmd
+   setx ADO_PAT "your-personal-access-token"
+   ```
+
+3. **Test the robot:**
+   ```bash
+   python jira_ado_traceability_scheduled.py
+   ```
+
+4. **Schedule it:**
+   - Follow [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md)
+   - Use Windows Task Scheduler
+   - Run `run_traceability_robot.bat` daily/weekly
+
+### Monitoring Your Robot
+
+**Logs:** Check `logs/` directory for execution logs
+```
+logs/jira_ado_traceability_20250114_080000.log
+```
+
+**Reports:** Check configured output directory for reports
+```
+reports/Jira_ADO_Traceability_Report_20250114_080000.xlsx
+```
+
+**Task Scheduler:** View execution history in Windows Task Scheduler
 
 ## 🔐 Security & Credentials
 
@@ -151,9 +212,10 @@ jira-ado-traceability-project/
 
 **Security Notes:**
 - Never commit credentials to version control
-- Use environment variables for production
+- Use environment variables for production (especially with the robot)
 - Rotate tokens regularly
 - Limit PAT permissions to minimum required
+- Keep `config.json` out of version control
 
 ## 🛠️ Customization
 

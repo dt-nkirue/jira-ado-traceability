@@ -47,6 +47,7 @@ jira_*.json
 
 # Credentials (IMPORTANT!)
 config.ini
+config.json
 credentials.json
 .env
 *_credentials.py

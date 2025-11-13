@@ -1,0 +1,36 @@
+{
+  "ado": {
+    "server": "http://tfsserver:8080/tfs",
+    "collection": "YourCollection",
+    "project": "YourProject",
+    "pat": "your-ado-personal-access-token"
+  },
+  "jira": {
+    "data_file": "C:\\Users\\nkirue\\AI-Playarea\\jira_with_ado.json"
+  },
+  "output": {
+    "report_directory": "C:\\Users\\nkirue\\AI-Playarea\\reports",
+    "report_filename": "Jira_ADO_Traceability_Report_{timestamp}.xlsx"
+  },
+  "fuzzy_matching": {
+    "enabled": true,
+    "min_score": 70,
+    "max_ado_items": 200,
+    "days_lookback": 90
+  },
+  "logging": {
+    "log_directory": "C:\\Users\\nkirue\\AI-Playarea\\logs",
+    "log_level": "INFO"
+  },
+  "notifications": {
+    "enabled": false,
+    "email": {
+      "smtp_server": "smtp.example.com",
+      "smtp_port": 587,
+      "from_address": "reports@example.com",
+      "to_addresses": ["user@example.com"],
+      "username": "smtp_username",
+      "password": "smtp_password"
+    }
+  }
+}
