@@ -1,20 +1,22 @@
 # Jira-ADO Traceability System
 
-A comprehensive Python-based tool for generating traceability reports between Jira issues and Azure DevOps (TFS) work items with intelligent fuzzy matching for unlinked items. **Now includes scheduled robot capabilities!**
+A comprehensive Python tool for generating traceability reports between Jira issues and Azure DevOps (TFS) work items with intelligent fuzzy matching for unlinked items.
 
-## 🎯 Features
+## Features
 
-- **Automated Scheduling** 🤖 - Run reports on a schedule using Windows Task Scheduler
+- **Modular Architecture** - Clean, maintainable code structure with strict quality standards
+- **Type-Safe** - Full type hints with strict type checking using Pyright
+- **Automated Testing** - Comprehensive test suite with unit, integration, and e2e tests
+- **Code Quality** - Ruff linting, formatting, and complexity checks
+- **Build Automation** - Just-based build system for streamlined development
 - **Secure Configuration** - Environment variable support for credentials
-- **Detailed Logging** - Timestamped logs for monitoring and troubleshooting
-- **Error Handling** - Retry logic and graceful failure handling
+- **Detailed Logging** - Comprehensive output for monitoring and troubleshooting
 - **Automated Data Fetching** - Connects to both Jira Cloud and Azure DevOps/TFS APIs
 - **Comprehensive Comparison** - Analyzes status, severity, and assignee alignment
-- **Fuzzy Matching** - Intelligent title-based matching for unlinked items (≥70% confidence)
-- **Excel Report Generation** - Creates detailed 7-sheet Excel reports
-- **Visual Analytics** - Color-coded sheets with formatted data
+- **Fuzzy Matching** - Intelligent title-based matching for unlinked items (70% confidence)
+- **Excel Report Generation** - Creates detailed 7-sheet Excel reports with analytics
 
-## 📊 Report Sheets
+## Report Sheets
 
 The tool generates an Excel file with 7 comprehensive sheets:
 
@@ -26,14 +28,15 @@ The tool generates an Excel file with 7 comprehensive sheets:
 6. **Potential Matches** - Fuzzy-matched suggestions for unlinked items
 7. **Unlinked Issues** - Jira items without ADO connections
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
-- Python 3.8+
+- Python 3.13+
+- [uv](https://github.com/astral-sh/uv) package manager
+- [just](https://github.com/casey/just) command runner
 - Jira Cloud account with API access
 - Azure DevOps/TFS server access
-- Required Python packages (see Installation)
 
 ### Installation
 
@@ -42,293 +45,253 @@ The tool generates an Excel file with 7 comprehensive sheets:
 git clone https://github.com/yourusername/jira-ado-traceability-project.git
 cd jira-ado-traceability-project
 
-# Install required packages
-pip install -r requirements.txt
+# Setup development environment (installs dependencies)
+just dev-setup
 ```
 
 ### Configuration
 
-Edit `jira_ado_traceability.py` and update the configuration section:
+Create a `config.json` file based on `config.example.json`:
 
-```python
-# Jira Configuration
-JIRA_URL = "https://yourcompany.atlassian.net"
-JIRA_EMAIL = "your.email@company.com"
-JIRA_API_TOKEN = "your-jira-api-token"
-PROJECT_KEY = "GRA"
+```json
+{
+  "ado_server": "http://tfsserver:8080/tfs",
+  "ado_collection": "YourCollection",
+  "ado_project": "YourProject",
+  "jira_data_file": "path/to/jira_data.json",
+  "output_file": "reports/Jira_ADO_Traceability_Report.xlsx",
+  "fuzzy_match_threshold": 70,
+  "fuzzy_match_limit": 5,
+  "ado_scan_days": 90
+}
+```
 
-# Azure DevOps Configuration
-ADO_SERVER = "http://tfsserver:8080/tfs"
-ADO_COLLECTION = "Iho"
-ADO_PROJECT = "Guyana"
-ADO_PAT = "your-ado-personal-access-token"
+Set environment variable for ADO PAT (recommended):
+
+```bash
+# Windows
+setx ADO_PAT "your-personal-access-token"
+
+# Linux/Mac
+export ADO_PAT="your-personal-access-token"
 ```
 
 ### Usage
 
-**Option 1: Manual Run**
 ```bash
-python jira_ado_traceability.py
+# Run with config file (recommended)
+just run-scheduled
+
+# Run with custom config
+just run-config path/to/config.json
+
+# Run manual mode (hardcoded config)
+just run-manual
 ```
 
-**Option 2: Scheduled Robot (Recommended for Automation)**
+## Development Commands
+
 ```bash
-# One-time setup (see SETUP_INSTRUCTIONS.md for details)
-copy config.example.json config.json
-# Edit config.json with your settings
+# Development workflow
+just dev-setup      # Setup environment (first time only)
+just dev            # Format code + run all checks (use after changes!)
 
-# Test manual run
-python jira_ado_traceability_scheduled.py
+# Code quality
+just check          # Run all quality checks
+just lint           # Linting with ruff
+just format         # Format code with ruff
+just typecheck      # Type checking with pyright
+just check-noqa     # Ensure no noqa comments
+just check-cloc     # Check file line counts
 
-# Schedule with Windows Task Scheduler
-# Use the batch file: run_traceability_robot.bat
+# Testing
+just test           # Run all tests
+just test-cov       # Run tests with coverage report
+just test-unit      # Run only unit tests
+just test-integration  # Run only integration tests
+just test-e2e       # Run only e2e tests
+
+# Build
+just build          # Build distribution packages
+just clean          # Clean build artifacts
 ```
 
-**Option 3: Claude Code Skill**
+## Project Structure
+
 ```
-skill: jira-ado-traceability
+jira-ado-traceability-project/
+├── src/jira_ado_traceability/   # Source code
+│   ├── __init__.py
+│   ├── models.py                # Data models and types
+│   ├── config.py                # Configuration management
+│   ├── jira_parser.py           # Jira JSON parsing
+│   ├── ado_client.py            # ADO API client
+│   ├── fuzzy_matcher.py         # Fuzzy matching logic
+│   ├── comparator.py            # Comparison functions
+│   ├── reporter.py              # Summary statistics
+│   ├── excel_generator.py       # Excel report generation
+│   ├── cli_manual.py            # Manual mode entry point
+│   └── cli_scheduled.py         # Scheduled mode entry point
+├── tests/                       # Test suite
+│   ├── unit/                    # Unit tests
+│   ├── integration/             # Integration tests
+│   └── e2e/                     # End-to-end tests
+├── scripts/                     # Utility scripts
+│   └── check_line_counts.py    # Line count validator
+├── pyproject.toml              # Project configuration
+├── justfile                    # Build automation
+├── .pre-commit-config.yaml     # Pre-commit hooks
+├── CLAUDE.md                   # AI assistant guidelines
+└── README.md                   # This file
 ```
 
-**📋 For complete scheduling setup, see [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md)**
+## Code Quality Standards
 
-## 📋 What Gets Tracked
+This project follows strict code quality standards:
 
-### Jira Fields
-- Key, Summary, Status, Priority
-- Issue Type, Severity
-- Assignee, Reporter
-- Created Date, Resolution Date
-- Custom Fields: AzureDevOps ID, AzureDevOps State
+- **Maximum file length**: 500 lines
+- **Maximum function complexity**: 10
+- **Type checking**: Strict mode with Pyright
+- **Linting**: Ruff with comprehensive rule set
+- **No `noqa` comments**: All issues must be properly resolved
+- **Pre-commit hooks**: Security scanning with gitleaks
 
-### Azure DevOps Fields
-- Work Item ID, Title, State
-- Work Item Type, Priority, Severity
-- Assigned To
-- Created Date, Closed Date, Resolved Date
-- Area Path, Iteration Path
+## Testing
 
-### Comparison Metrics
-- **Status Alignment** - Both closed, both open, or mismatched
-- **Severity Matching** - Numeric severity comparison
-- **Assignee Consistency** - Display name matching
-- **Fuzzy Title Matching** - 70%+ similarity for unlinked items
+```bash
+# Run all tests
+just test
 
-## 🔍 Fuzzy Matching
+# Run with coverage
+just test-cov
+
+# Run specific test types
+just test-unit
+just test-integration
+just test-e2e
+```
+
+Tests are organized into:
+- **Unit tests**: Test individual functions and modules
+- **Integration tests**: Test module interactions
+- **E2E tests**: Test complete workflows
+
+## Fuzzy Matching
 
 The tool uses intelligent fuzzy matching to suggest potential links:
 
 - **Algorithm**: Token sort ratio (handles word order differences)
-- **Threshold**: 70% minimum similarity
+- **Threshold**: 70% minimum similarity (configurable)
 - **Confidence Levels**:
-  - 🟢 Very High (90-100%)
-  - 🟢 High (80-89%)
-  - 🟡 Medium (70-79%)
-- **Scan Scope**: Last 90 days of ADO work items
-- **Match Limit**: Top 5 suggestions per Jira item
+  - Very High (90-100%)
+  - High (80-89%)
+  - Medium (70-79%)
+- **Scan Scope**: Configurable days (default: 90 days)
+- **Match Limit**: Top N suggestions per Jira item (default: 5)
 
-## 📦 Project Structure
-
-```
-jira-ado-traceability-project/
-├── jira_ado_traceability.py              # Original manual script
-├── jira_ado_traceability_scheduled.py    # Scheduled robot version (NEW!)
-├── run_traceability_robot.bat            # Windows batch wrapper for robot
-├── config.example.json                   # Example configuration (NEW!)
-├── config.json                           # Your configuration (create this)
-├── SETUP_INSTRUCTIONS.md                 # Complete scheduling guide (NEW!)
-├── requirements.txt                      # Python dependencies
-├── README.md                             # This file
-└── skill/                                # Claude Code skill files
-    ├── skill.md                          # Skill documentation
-    ├── prompt.md                         # Skill instructions
-    ├── skill.json                        # Skill configuration
-    ├── README.md                         # Skill README
-    └── traceability_template.py          # Template script
-```
-
-## 🤖 Scheduled Robot Features
-
-The scheduled robot version (`jira_ado_traceability_scheduled.py`) includes:
-
-### Key Enhancements
-- **Configuration File** - JSON-based configuration instead of hardcoded values
-- **Environment Variables** - Secure credential management via env vars
-- **Comprehensive Logging** - Detailed logs with timestamps for each execution
-- **Error Handling** - Retry logic for API calls, graceful failure handling
-- **Exit Codes** - Proper exit codes for monitoring (0=success, 1=failure)
-- **Timestamped Reports** - Reports with timestamps to track execution history
-- **Modular Design** - Class-based architecture for maintainability
-
-### Quick Robot Setup
-
-1. **Create config file:**
-   ```bash
-   copy config.example.json config.json
-   # Edit with your settings
-   ```
-
-2. **Set environment variable (recommended):**
-   ```cmd
-   setx ADO_PAT "your-personal-access-token"
-   ```
-
-3. **Test the robot:**
-   ```bash
-   python jira_ado_traceability_scheduled.py
-   ```
-
-4. **Schedule it:**
-   - Follow [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md)
-   - Use Windows Task Scheduler
-   - Run `run_traceability_robot.bat` daily/weekly
-
-### Monitoring Your Robot
-
-**Logs:** Check `logs/` directory for execution logs
-```
-logs/jira_ado_traceability_20250114_080000.log
-```
-
-**Reports:** Check configured output directory for reports
-```
-reports/Jira_ADO_Traceability_Report_20250114_080000.xlsx
-```
-
-**Task Scheduler:** View execution history in Windows Task Scheduler
-
-## 🔐 Security & Credentials
+## Security & Credentials
 
 ### Jira API Token
 1. Go to https://id.atlassian.com/manage-profile/security/api-tokens
 2. Click "Create API token"
-3. Give it a name and copy the token
-4. Use it in the configuration
+3. Copy and store securely
 
 ### Azure DevOps PAT
 1. Go to your Azure DevOps organization
 2. Click User Settings → Personal access tokens
-3. Create a new token with "Work Items (Read)" permission
-4. Copy and use in configuration
+3. Create token with "Work Items (Read)" permission
+4. Store in environment variable `ADO_PAT`
 
-**Security Notes:**
+**Security Best Practices:**
 - Never commit credentials to version control
-- Use environment variables for production (especially with the robot)
+- Use environment variables for production
 - Rotate tokens regularly
 - Limit PAT permissions to minimum required
-- Keep `config.json` out of version control
+- Pre-commit hooks scan for secrets
 
-## 🛠️ Customization
+## Customization
 
 ### Adjust Fuzzy Matching Threshold
 
-```python
-# Line 231: Change minimum score
-if score >= 60 and ado_id_key:  # Lower from 70 to 60
+Edit `config.json`:
+```json
+{
+  "fuzzy_match_threshold": 60
+}
 ```
 
 ### Change ADO Scan Window
 
-```python
-# Line 171: Adjust time period
-"[System.CreatedDate] >= @Today - 90"  # Change from 90 days
+Edit `config.json`:
+```json
+{
+  "ado_scan_days": 120
+}
 ```
 
 ### Increase Match Suggestions
 
-```python
-# Line 219: Get more suggestions per item
-matches = process.extract(..., limit=10)  # From 5 to 10
+Edit `config.json`:
+```json
+{
+  "fuzzy_match_limit": 10
+}
 ```
 
-## 📈 Use Cases
+## Troubleshooting
 
-- **UAT Testing** - Track testing issues across both systems
-- **Sprint Planning** - Understand work item distribution
-- **Compliance Audits** - Generate traceability documentation
-- **Status Synchronization** - Identify sync issues between tools
-- **Severity Validation** - Ensure consistent priorities
-- **Team Coordination** - Monitor assignee alignment
-- **Migration Planning** - Assess linkage before migration
-
-## 🐛 Troubleshooting
-
-### "Permission Denied" Error
+### Permission Denied Error
 - Close Excel if the report file is open
 - Check file permissions in the output directory
 
-### "Could not connect to Jira"
-- Verify API token is valid
-- Check Jira URL format
-- Ensure project key exists
-
-### "Failed to fetch ADO work item"
-- Confirm PAT has read permissions
-- Verify TFS server is accessible
-- Check network connectivity
+### Could not connect to ADO
+- Verify PAT has read permissions
+- Check TFS server is accessible
+- Verify network connectivity
 
 ### No Fuzzy Matches Found
 - Try lowering the threshold (min 60)
 - Check if ADO work items exist in the time window
 - Verify title similarity is sufficient
 
-## 📝 Requirements
+### Quality Check Failures
 
-### Python Packages
+```bash
+# Fix linting issues automatically
+just fix
+
+# Format code
+just format
+
+# Check what's failing
+just check
 ```
-pandas>=2.0.0
-openpyxl>=3.1.0
-requests>=2.31.0
-fuzzywuzzy>=0.18.0
-python-Levenshtein>=0.21.0
-```
 
-### System Requirements
-- Python 3.8 or higher
-- 100MB free disk space
-- Internet connectivity to Jira and ADO
-- Windows, macOS, or Linux
+## Contributing
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please:
 
 1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+2. Create a feature branch
+3. Run `just dev` after changes
+4. Ensure all tests pass (`just test`)
+5. Submit a pull request
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 👤 Author
-
-Created for enterprise Jira-ADO integration and traceability reporting.
-
-## 🙏 Acknowledgments
-
-- Built with Claude Code
-- Uses fuzzywuzzy for text matching
-- Powered by Jira REST API and Azure DevOps REST API
-
-## 📧 Support
-
-For issues, questions, or suggestions:
-- Open an issue on GitHub
-- Check the [Troubleshooting Guide](docs/TROUBLESHOOTING.md)
-- Review the [FAQ](docs/FAQ.md)
-
-## 🔄 Version History
+## Version History
 
 ### v1.0.0 (Current)
-- Initial release
-- Full Jira-ADO traceability
-- Fuzzy matching for unlinked items
-- 7-sheet Excel report
-- Claude Code skill integration
-- Configurable thresholds
+- Modular architecture with strict quality standards
+- Full type hints and type checking
+- Comprehensive test suite
+- Build automation with just
+- Pre-commit hooks with security scanning
+- Configuration file support
+- Environment variable support
 
 ---
 
-**⭐ If this tool helps you, please consider starring the repository!**
+Built with modern Python best practices using `uv`, `just`, `ruff`, and `pyright`.
