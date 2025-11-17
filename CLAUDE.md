@@ -2,15 +2,15 @@
 
 ## PROJECT CONTEXT
 
-This is a Jira-ADO Traceability System that generates comprehensive reports between Jira issues and Azure DevOps work items. The project uses `uv`, `just`, strict linting, and type checking.
+This is a Jira-ADO Traceability System that generates comprehensive reports between Jira issues and Azure DevOps work items. This project uses the DataTorque Python template with `uv`, `just`, strict linting, and type checking.
 
 ## STRICT RULES - MUST ALWAYS FOLLOW
 
 ### Environment Rules
 1. **ALWAYS use `uv` for Python operations** - **NEVER** use system Python
 2. **ALWAYS use `just` commands** for all project operations (test, lint, format, check)
-3. **Use bash for command-line operations** - **NEVER** use `cmd`
-4. **Use PowerShell ONLY for complex Windows-specific tasks**
+3. **ALWAYS use bash for command-line operations** - **NEVER** use `cmd`
+4. **Use PowerShell ONLY for Windows-specific justfile recipes**
 
 ### Code Quality Rules
 1. **Maximum file length: 500 lines** - NO EXCEPTIONS
@@ -22,7 +22,7 @@ This is a Jira-ADO Traceability System that generates comprehensive reports betw
 7. **ALL code must pass `just check`** before completion
 
 ### Testing Rules
-1. **Run `just dev` after EVERY code change**
+1. **Run `just format` then `just check` after EVERY code change**
 2. **Run `just test` to verify functionality**
 3. **Create unit tests for all new modules**
 4. **Maintain test coverage above 70%**
@@ -41,11 +41,11 @@ This is a Jira-ADO Traceability System that generates comprehensive reports betw
 just dev-setup
 
 # Quality checks (MUST PASS)
-just dev          # Format + all checks (use after changes)
-just check        # Runs all checks
+just format       # Format code first
+just check        # Run all checks (lint + typecheck + cloc)
 just lint         # Linting only
-just format       # Format code
-just typecheck    # Type checking
+just typecheck    # Type checking only
+just fix          # Auto-fix linting issues
 
 # Testing
 just test         # Run all tests
@@ -65,9 +65,10 @@ just clean        # Clean artifacts
 1. Analyze existing code structure
 2. Create implementation plan
 3. Implement changes incrementally
-4. Run `just dev` after each change
-5. Ensure all tests pass
-6. Verify output matches expectations
+4. Run `just format` to format code
+5. Run `just check` to verify quality (must pass)
+6. Ensure all tests pass with `just test`
+7. Verify output matches expectations
 
 ## PROJECT STRUCTURE
 

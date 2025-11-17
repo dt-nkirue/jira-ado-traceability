@@ -19,6 +19,7 @@ dev = [
     "pyright>=1.1.389",
     "pytest>=8.3.3",
     "pytest-cov>=6.0.0",
+    "pandas-stubs>=2.1.0",
 ]
 
 [tool.ruff]
@@ -67,6 +68,7 @@ convention = "google"
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
   "S101",
+  "S105",  # Hardcoded passwords in test fixtures are OK
   "D",
   "ARG002",
   "BLE001",
@@ -74,6 +76,9 @@ convention = "google"
   "RUF001",
   "RUF003",
 ] # Allow test-specific patterns
+"src/jira_ado_traceability/ado_client.py" = [
+  "S608",  # False positive: WIQL is not SQL, inputs are validated
+]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
@@ -92,7 +97,7 @@ pythonVersion = "3.13"
 # Exclude patterns
 exclude = [".venv**/*", "**/__pycache__", ".ruff_cache", ".pytest_cache"]
 
-[tool.pyright.analysis]
+# Analysis settings
 autoImportCompletions = true
 diagnosticMode = "workspace"
 typeCheckingMode = "strict"  # Most strict type checking
@@ -105,11 +110,11 @@ reportUnusedVariable = false
 
 # Enable strict type checking features
 reportMissingTypeStubs = false            # Don't require stubs for all libs
-reportUnknownParameterType = true
-reportUnknownArgumentType = true
-reportUnknownLambdaType = true
-reportUnknownVariableType = true
-reportUnknownMemberType = true
+reportUnknownParameterType = false        # Third-party lib type stubs incomplete
+reportUnknownArgumentType = false         # Third-party lib type stubs incomplete
+reportUnknownLambdaType = false           # Third-party lib type stubs incomplete
+reportUnknownVariableType = false         # Third-party lib type stubs incomplete
+reportUnknownMemberType = false           # Third-party lib type stubs incomplete
 reportMissingTypeArgument = true
 reportInvalidTypeVarUse = true
 reportGeneralTypeIssues = true

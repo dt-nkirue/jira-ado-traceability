@@ -68,21 +68,13 @@ def compare_assignee(jira_assignee: str, ado_assignee: str) -> str:
     return "[WARN] Different"
 
 
-def add_comparison_columns(
-    df: pd.DataFrame,
-    ado_work_items: dict[str, AdoWorkItem],
-) -> pd.DataFrame:
-    """Add ADO data and comparison columns to Jira DataFrame.
-
-    Args:
-        df: Jira DataFrame
-        ado_work_items: Dictionary of ADO work items
+def _get_ado_field_mapping() -> dict[str, str]:
+    """Get mapping of DataFrame columns to ADO work item fields.
 
     Returns:
-        DataFrame with ADO data and comparison columns added
+        Dictionary mapping DataFrame column names to work item field names
     """
-    # Define ADO columns to add
-    ado_field_mapping = {
+    return {
         "ADO Title": "title",
         "ADO State": "state",
         "ADO Assigned To": "assigned_to",
@@ -96,32 +88,57 @@ def add_comparison_columns(
         "ADO Iteration Path": "iteration_path",
     }
 
-    # Initialize ADO columns
+
+def _populate_ado_data(df: pd.DataFrame, ado_work_items: dict[str, AdoWorkItem]) -> pd.DataFrame:
+    """Populate ADO data columns in DataFrame.
+
+    Args:
+        df: DataFrame to populate
+        ado_work_items: Dictionary of ADO work items
+
+    Returns:
+        DataFrame with ADO data populated
+    """
+    ado_field_mapping = _get_ado_field_mapping()
+
     for col in ado_field_mapping:
         df[col] = ""
 
-    # Fill in ADO data
     for idx, row in df.iterrows():
         ado_id = str(row["ADO ID"])
         if ado_id in ado_work_items:
             work_item = ado_work_items[ado_id]
             for col, field in ado_field_mapping.items():
-                df.at[idx, col] = work_item.get(field, "")
+                # Get field value from TypedDict with proper typing
+                field_value: str = work_item.get(field, "")  # type: ignore[misc]
+                df.loc[idx, col] = field_value  # type: ignore[call-overload]
 
-    # Add comparison columns
+    return df
+
+
+def add_comparison_columns(
+    df: pd.DataFrame,
+    ado_work_items: dict[str, AdoWorkItem],
+) -> pd.DataFrame:
+    """Add ADO data and comparison columns to Jira DataFrame.
+
+    Args:
+        df: Jira DataFrame
+        ado_work_items: Dictionary of ADO work items
+
+    Returns:
+        DataFrame with ADO data and comparison columns added
+    """
+    df = _populate_ado_data(df, ado_work_items)
+
     df["Status Comparison"] = df.apply(
-        lambda row: compare_status(row["Jira Status Category"], row["ADO State"]),
-        axis=1,
+        lambda row: compare_status(str(row["Jira Status Category"]), str(row["ADO State"])), axis=1
     )
-
     df["Severity Comparison"] = df.apply(
-        lambda row: compare_severity(row["Jira Severity"], row["ADO Severity"]),
-        axis=1,
+        lambda row: compare_severity(str(row["Jira Severity"]), str(row["ADO Severity"])), axis=1
     )
-
     df["Assignee Match"] = df.apply(
-        lambda row: compare_assignee(row["Jira Assignee"], row["ADO Assigned To"]),
-        axis=1,
+        lambda row: compare_assignee(str(row["Jira Assignee"]), str(row["ADO Assigned To"])), axis=1
     )
 
     return df

@@ -11,7 +11,7 @@ A comprehensive Python tool for generating traceability reports between Jira iss
 - **Build Automation** - Just-based build system for streamlined development
 - **Secure Configuration** - Environment variable support for credentials
 - **Detailed Logging** - Comprehensive output for monitoring and troubleshooting
-- **Automated Data Fetching** - Connects to both Jira Cloud and Azure DevOps/TFS APIs
+- **Dual Data Sources** - Real-time API fetching (recommended) or static JSON file input
 - **Comprehensive Comparison** - Analyzes status, severity, and assignee alignment
 - **Fuzzy Matching** - Intelligent title-based matching for unlinked items (70% confidence)
 - **Excel Report Generation** - Creates detailed 7-sheet Excel reports with analytics
@@ -22,8 +22,8 @@ The tool generates an Excel file with 7 comprehensive sheets:
 
 1. **Summary** - High-level statistics and key metrics
 2. **Full Traceability** - Complete mapping of all Jira issues to ADO work items
-3. **Mismatches** - Items with status, severity, or assignee discrepancies
-4. **Matched Items** - All Jira issues successfully linked to ADO
+3. **Matched Items** - All Jira issues successfully linked to ADO
+4. **Mismatches** - Items with status, severity, or assignee discrepancies
 5. **Matched Summary** - Detailed analytics for linked items
 6. **Potential Matches** - Fuzzy-matched suggestions for unlinked items
 7. **Unlinked Issues** - Jira items without ADO connections
@@ -32,9 +32,11 @@ The tool generates an Excel file with 7 comprehensive sheets:
 
 ### Prerequisites
 
-- Python 3.13+
-- [uv](https://github.com/astral-sh/uv) package manager
-- [just](https://github.com/casey/just) command runner
+**Required:**
+- [uv](https://github.com/astral-sh/uv) - Package and Python manager (auto-installs Python 3.13+)
+- [just](https://github.com/casey/just) - Command runner
+
+**Credentials:**
 - Jira Cloud account with API access
 - Azure DevOps/TFS server access
 
@@ -42,8 +44,8 @@ The tool generates an Excel file with 7 comprehensive sheets:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/jira-ado-traceability-project.git
-cd jira-ado-traceability-project
+git clone https://github.com/dt-nkirue/jira-ado-traceability.git
+cd jira-ado-traceability
 
 # Setup development environment (installs dependencies)
 just dev-setup
@@ -51,7 +53,32 @@ just dev-setup
 
 ### Configuration
 
-Create a `config.json` file based on `config.example.json`:
+#### Option 1: API Mode (Recommended - Real-time Data)
+
+Set environment variables for real-time Jira/ADO data fetching:
+
+```bash
+# Azure DevOps
+export ADO_SERVER="http://tfsserver:8080/tfs"
+export ADO_COLLECTION="YourCollection"
+export ADO_PROJECT="YourProject"
+export ADO_PAT="your-ado-personal-access-token"
+
+# Jira Cloud API
+export DATA_SOURCE="API"
+export JIRA_URL="https://yourcompany.atlassian.net"
+export JIRA_USERNAME="your-email@company.com"
+export JIRA_API_TOKEN="your-jira-api-token"
+export JIRA_PROJECT_KEY="PROJ"
+export JIRA_JQL="project=PROJ AND created >= -90d"
+
+# Output
+export OUTPUT_FILE="reports/Jira_ADO_Traceability_Report.xlsx"
+```
+
+#### Option 2: File Mode (For Testing with Static Data)
+
+Create a `config.json` file:
 
 ```json
 {
@@ -66,7 +93,7 @@ Create a `config.json` file based on `config.example.json`:
 }
 ```
 
-Set environment variable for ADO PAT (recommended):
+Set ADO PAT environment variable:
 
 ```bash
 # Windows
@@ -79,37 +106,38 @@ export ADO_PAT="your-personal-access-token"
 ### Usage
 
 ```bash
-# Run with config file (recommended)
+# API Mode - Real-time data fetching (recommended)
+# Requires environment variables set as shown above
+just run-manual
+
+# File Mode - Using config.json + static Jira JSON
 just run-scheduled
 
-# Run with custom config
+# Custom config file
 just run-config path/to/config.json
-
-# Run manual mode (hardcoded config)
-just run-manual
 ```
+
+**Note:** `run-manual` uses environment variables (API mode), while `run-scheduled` uses a config.json file (FILE mode).
 
 ## Development Commands
 
 ```bash
 # Development workflow
 just dev-setup      # Setup environment (first time only)
-just dev            # Format code + run all checks (use after changes!)
+just format         # Format code with ruff
+just check          # Run all quality checks (use after changes!)
 
 # Code quality
-just check          # Run all quality checks
 just lint           # Linting with ruff
-just format         # Format code with ruff
 just typecheck      # Type checking with pyright
+just fix            # Auto-fix linting issues
 just check-noqa     # Ensure no noqa comments
 just check-cloc     # Check file line counts
 
 # Testing
-just test           # Run all tests
+just test           # Run all tests (67 unit tests)
 just test-cov       # Run tests with coverage report
-just test-unit      # Run only unit tests
-just test-integration  # Run only integration tests
-just test-e2e       # Run only e2e tests
+just test-unit      # Run unit tests
 
 # Build
 just build          # Build distribution packages
@@ -125,6 +153,7 @@ jira-ado-traceability-project/
 │   ├── models.py                # Data models and types
 │   ├── config.py                # Configuration management
 │   ├── jira_parser.py           # Jira JSON parsing
+│   ├── jira_client.py           # Jira API client
 │   ├── ado_client.py            # ADO API client
 │   ├── fuzzy_matcher.py         # Fuzzy matching logic
 │   ├── comparator.py            # Comparison functions
@@ -132,10 +161,10 @@ jira-ado-traceability-project/
 │   ├── excel_generator.py       # Excel report generation
 │   ├── cli_manual.py            # Manual mode entry point
 │   └── cli_scheduled.py         # Scheduled mode entry point
-├── tests/                       # Test suite
-│   ├── unit/                    # Unit tests
-│   ├── integration/             # Integration tests
-│   └── e2e/                     # End-to-end tests
+├── tests/                       # Test suite (67 unit tests)
+│   ├── unit/                    # Unit tests (all current tests)
+│   ├── integration/             # Integration tests (placeholder)
+│   └── e2e/                     # End-to-end tests (placeholder)
 ├── scripts/                     # Utility scripts
 │   └── check_line_counts.py    # Line count validator
 ├── pyproject.toml              # Project configuration
@@ -165,16 +194,19 @@ just test
 # Run with coverage
 just test-cov
 
-# Run specific test types
+# Run unit tests
 just test-unit
-just test-integration
-just test-e2e
 ```
 
-Tests are organized into:
-- **Unit tests**: Test individual functions and modules
-- **Integration tests**: Test module interactions
-- **E2E tests**: Test complete workflows
+**Current Test Suite:** 67 comprehensive unit tests covering:
+- Configuration management
+- Jira JSON parsing
+- ADO API client with mocking
+- Fuzzy matching logic
+- Comparison functions
+- Report generation
+
+All tests passing with strict type checking and quality standards.
 
 ## Fuzzy Matching
 
@@ -273,7 +305,7 @@ Contributions are welcome! Please:
 
 1. Fork the repository
 2. Create a feature branch
-3. Run `just dev` after changes
+3. Run `just format` and `just check` after changes
 4. Ensure all tests pass (`just test`)
 5. Submit a pull request
 

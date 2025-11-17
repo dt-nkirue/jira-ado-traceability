@@ -1,12 +1,13 @@
 """Excel report generation for Jira-ADO traceability."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils.dataframe import dataframe_to_rows
+from openpyxl.worksheet.worksheet import Worksheet
 
 from jira_ado_traceability.models import FuzzyMatch
 
@@ -18,11 +19,12 @@ def create_workbook() -> Workbook:
         New workbook instance
     """
     wb = Workbook()
-    wb.remove(wb.active)
+    if wb.active:
+        wb.remove(wb.active)
     return wb
 
 
-def format_header_row(sheet: any, row_num: int = 1, color: str = "4472C4") -> None:
+def format_header_row(sheet: Worksheet, row_num: int = 1, color: str = "4472C4") -> None:
     """Format header row with styling.
 
     Args:
@@ -36,7 +38,7 @@ def format_header_row(sheet: any, row_num: int = 1, color: str = "4472C4") -> No
         cell.alignment = Alignment(horizontal="center")
 
 
-def auto_adjust_columns(sheet: any, max_width: int = 50) -> None:
+def auto_adjust_columns(sheet: Worksheet, max_width: int = 50) -> None:
     """Auto-adjust column widths based on content.
 
     Args:
@@ -45,13 +47,19 @@ def auto_adjust_columns(sheet: any, max_width: int = 50) -> None:
     """
     for column in sheet.columns:
         max_length = 0
-        column_letter = column[0].column_letter
+        # Get column letter, handling merged cells
+        first_cell = column[0]
+        if not hasattr(first_cell, "column_letter"):
+            continue  # Skip merged cells
+
+        column_letter: str = first_cell.column_letter  # type: ignore[attr-defined]
+
         for cell in column:
             try:
-                if len(str(cell.value)) > max_length:
-                    max_length = len(str(cell.value))
-            except Exception:
-                pass
+                max_length = max(max_length, len(str(cell.value)))
+            except (TypeError, AttributeError):
+                # Skip cells with values that can't be converted to string
+                continue
         adjusted_width = min(max_length + 2, max_width)
         sheet.column_dimensions[column_letter].width = adjusted_width
 
@@ -65,7 +73,7 @@ def add_summary_sheet(wb: Workbook, summary_df: pd.DataFrame) -> None:
     """
     ws = wb.create_sheet("Summary")
     ws.append(["Jira-ADO Traceability Report"])
-    ws.append(["Generated on:", datetime.now().strftime("%Y-%m-%d %H:%M:%S")])
+    ws.append(["Generated on:", datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")])
     ws.append([])
     ws.append(["Summary Statistics"])
 
@@ -121,6 +129,110 @@ def add_matched_items_sheet(wb: Workbook, df_matched: pd.DataFrame) -> None:
     auto_adjust_columns(ws)
 
 
+def _calculate_match_statistics(df_matched: pd.DataFrame) -> dict[str, int]:
+    """Calculate match statistics from DataFrame.
+
+    Args:
+        df_matched: DataFrame with matched items
+
+    Returns:
+        Dictionary with calculated statistics
+    """
+    return {
+        "total_matched": len(df_matched),
+        "matched_closed": len(df_matched[df_matched["Jira Status Category"] == "Done"]),
+        "matched_open": len(df_matched[df_matched["Jira Status Category"] != "Done"]),
+        "matched_status_ok": len(df_matched[df_matched["Status Comparison"].str.contains("[OK]", na=False)]),
+        "matched_status_warn": len(df_matched[df_matched["Status Comparison"].str.contains("[WARN]", na=False)]),
+        "matched_severity_ok": len(df_matched[df_matched["Severity Comparison"].str.contains("[OK]", na=False)]),
+        "matched_severity_warn": len(df_matched[df_matched["Severity Comparison"].str.contains("[WARN]", na=False)]),
+        "matched_assignee_ok": len(df_matched[df_matched["Assignee Match"].str.contains("[OK]", na=False)]),
+        "matched_assignee_warn": len(df_matched[df_matched["Assignee Match"].str.contains("[WARN]", na=False)]),
+        "perfect_matches": len(
+            df_matched[
+                (df_matched["Status Comparison"].str.contains("[OK]", na=False))
+                & (df_matched["Severity Comparison"].str.contains("[OK]", na=False))
+                & (df_matched["Assignee Match"].str.contains("[OK]", na=False))
+            ]
+        ),
+    }
+
+
+def _add_overall_statistics(ws: Worksheet, stats: dict[str, int]) -> None:
+    """Add overall statistics section to worksheet.
+
+    Args:
+        ws: Worksheet
+        stats: Statistics dictionary
+    """
+    total = stats["total_matched"]
+    ws.append(["Overall Linked Items Statistics"])
+    ws.append(["Metric", "Count", "Percentage"])
+    ws.append(["Total Linked Items", total, "100%"])
+    ws.append(
+        [
+            "Jira: Closed/Done",
+            stats["matched_closed"],
+            f"{(stats['matched_closed'] / total * 100):.1f}%" if total > 0 else "0%",
+        ]
+    )
+    ws.append(
+        [
+            "Jira: Open/In Progress",
+            stats["matched_open"],
+            f"{(stats['matched_open'] / total * 100):.1f}%" if total > 0 else "0%",
+        ]
+    )
+    ws.append([])
+
+
+def _add_comparison_quality(ws: Worksheet, stats: dict[str, int]) -> None:
+    """Add comparison quality metrics to worksheet.
+
+    Args:
+        ws: Worksheet
+        stats: Statistics dictionary
+    """
+    total = stats["total_matched"]
+    ws.append(["Comparison Quality (Linked Items)"])
+    ws.append(["Metric", "Count", "Percentage"])
+
+    metrics = [
+        ("Perfect Matches (All 3 Criteria)", "perfect_matches"),
+        ("Status Matches", "matched_status_ok"),
+        ("Status Mismatches", "matched_status_warn"),
+        ("Severity Matches", "matched_severity_ok"),
+        ("Severity Mismatches", "matched_severity_warn"),
+        ("Assignee Matches", "matched_assignee_ok"),
+        ("Assignee Mismatches", "matched_assignee_warn"),
+    ]
+
+    for label, key in metrics:
+        count = stats[key]
+        percentage = f"{(count / total * 100):.1f}%" if total > 0 else "0%"
+        ws.append([label, count, percentage])
+
+    ws.append([])
+
+
+def _style_matched_summary_sheet(ws: Worksheet) -> None:
+    """Apply styling to matched summary sheet.
+
+    Args:
+        ws: Worksheet to style
+    """
+    ws["A1"].font = Font(size=16, bold=True, color="FFFFFF")
+    ws["A1"].fill = PatternFill(start_color="28A745", end_color="28A745", fill_type="solid")
+
+    for row in ws.iter_rows():
+        if (
+            row[0].value
+            and isinstance(row[0].value, str)
+            and any(word in row[0].value.lower() for word in ["breakdown", "statistics", "top"])
+        ):
+            row[0].font = Font(bold=True, size=12)
+
+
 def add_matched_summary_sheet(wb: Workbook, df_matched: pd.DataFrame) -> None:
     """Add matched summary sheet with detailed analytics.
 
@@ -130,103 +242,18 @@ def add_matched_summary_sheet(wb: Workbook, df_matched: pd.DataFrame) -> None:
     """
     ws = wb.create_sheet("Matched Summary")
     ws.append(["Matched (Linked) Items Summary Report"])
-    ws.append(["Generated on:", datetime.now().strftime("%Y-%m-%d %H:%M:%S")])
+    ws.append(["Generated on:", datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")])
     ws.append([])
 
-    # Calculate statistics
-    total_matched = len(df_matched)
-    matched_closed = len(df_matched[df_matched["Jira Status Category"] == "Done"])
-    matched_open = len(df_matched[df_matched["Jira Status Category"] != "Done"])
-
-    # Comparison statistics
-    matched_status_ok = len(df_matched[df_matched["Status Comparison"].str.contains("[OK]", na=False)])
-    matched_status_warn = len(df_matched[df_matched["Status Comparison"].str.contains("[WARN]", na=False)])
-    matched_severity_ok = len(df_matched[df_matched["Severity Comparison"].str.contains("[OK]", na=False)])
-    matched_severity_warn = len(df_matched[df_matched["Severity Comparison"].str.contains("[WARN]", na=False)])
-    matched_assignee_ok = len(df_matched[df_matched["Assignee Match"].str.contains("[OK]", na=False)])
-    matched_assignee_warn = len(df_matched[df_matched["Assignee Match"].str.contains("[WARN]", na=False)])
-
-    # Perfect matches
-    perfect_matches = len(
-        df_matched[
-            (df_matched["Status Comparison"].str.contains("[OK]", na=False))
-            & (df_matched["Severity Comparison"].str.contains("[OK]", na=False))
-            & (df_matched["Assignee Match"].str.contains("[OK]", na=False))
-        ]
-    )
-
-    # Add overall statistics
-    ws.append(["Overall Linked Items Statistics"])
-    ws.append(["Metric", "Count", "Percentage"])
-    ws.append(["Total Linked Items", total_matched, "100%"])
-    ws.append([
-        "Jira: Closed/Done",
-        matched_closed,
-        f"{(matched_closed/total_matched*100):.1f}%" if total_matched > 0 else "0%",
-    ])
-    ws.append([
-        "Jira: Open/In Progress",
-        matched_open,
-        f"{(matched_open/total_matched*100):.1f}%" if total_matched > 0 else "0%",
-    ])
-    ws.append([])
-
-    # Add comparison quality
-    ws.append(["Comparison Quality (Linked Items)"])
-    ws.append(["Metric", "Count", "Percentage"])
-    ws.append([
-        "Perfect Matches (All 3 Criteria)",
-        perfect_matches,
-        f"{(perfect_matches/total_matched*100):.1f}%" if total_matched > 0 else "0%",
-    ])
-    ws.append([
-        "Status Matches",
-        matched_status_ok,
-        f"{(matched_status_ok/total_matched*100):.1f}%" if total_matched > 0 else "0%",
-    ])
-    ws.append([
-        "Status Mismatches",
-        matched_status_warn,
-        f"{(matched_status_warn/total_matched*100):.1f}%" if total_matched > 0 else "0%",
-    ])
-    ws.append([
-        "Severity Matches",
-        matched_severity_ok,
-        f"{(matched_severity_ok/total_matched*100):.1f}%" if total_matched > 0 else "0%",
-    ])
-    ws.append([
-        "Severity Mismatches",
-        matched_severity_warn,
-        f"{(matched_severity_warn/total_matched*100):.1f}%" if total_matched > 0 else "0%",
-    ])
-    ws.append([
-        "Assignee Matches",
-        matched_assignee_ok,
-        f"{(matched_assignee_ok/total_matched*100):.1f}%" if total_matched > 0 else "0%",
-    ])
-    ws.append([
-        "Assignee Mismatches",
-        matched_assignee_warn,
-        f"{(matched_assignee_warn/total_matched*100):.1f}%" if total_matched > 0 else "0%",
-    ])
-    ws.append([])
-
-    # Add breakdowns
+    stats = _calculate_match_statistics(df_matched)
+    _add_overall_statistics(ws, stats)
+    _add_comparison_quality(ws, stats)
     _add_status_breakdown(ws, df_matched)
     _add_top_assignees(ws, df_matched)
-
-    # Style the header
-    ws["A1"].font = Font(size=16, bold=True, color="FFFFFF")
-    ws["A1"].fill = PatternFill(start_color="28A745", end_color="28A745", fill_type="solid")
-
-    # Bold section headers
-    for row in ws.iter_rows():
-        if row[0].value and isinstance(row[0].value, str):
-            if any(word in row[0].value.lower() for word in ["breakdown", "statistics", "top"]):
-                row[0].font = Font(bold=True, size=12)
+    _style_matched_summary_sheet(ws)
 
 
-def _add_status_breakdown(ws: any, df_matched: pd.DataFrame) -> None:
+def _add_status_breakdown(ws: Worksheet, df_matched: pd.DataFrame) -> None:
     """Add status breakdown to sheet.
 
     Args:
@@ -246,7 +273,7 @@ def _add_status_breakdown(ws: any, df_matched: pd.DataFrame) -> None:
     ws.append([])
 
 
-def _add_top_assignees(ws: any, df_matched: pd.DataFrame) -> None:
+def _add_top_assignees(ws: Worksheet, df_matched: pd.DataFrame) -> None:
     """Add top assignees to sheet.
 
     Args:
@@ -337,8 +364,8 @@ def generate_excel_report(
     # Add sheets
     add_summary_sheet(wb, summary_df)
     add_full_traceability_sheet(wb, df)
-    add_mismatches_sheet(wb, df_mismatches)
     add_matched_items_sheet(wb, df_matched)
+    add_mismatches_sheet(wb, df_mismatches)
     add_matched_summary_sheet(wb, df_matched)
     add_fuzzy_matches_sheet(wb, fuzzy_matches)
     add_unlinked_issues_sheet(wb, df_unlinked)

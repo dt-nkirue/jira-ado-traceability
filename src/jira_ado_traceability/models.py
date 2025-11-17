@@ -21,8 +21,11 @@ class JiraIssue(TypedDict, total=False):
     ado_state_jira: str
 
 
-class AdoWorkItem(TypedDict, total=False):
-    """ADO work item data structure."""
+class AdoWorkItem(TypedDict):
+    """ADO work item data structure.
+
+    All fields are required to ensure type safety.
+    """
 
     id: str
     title: str

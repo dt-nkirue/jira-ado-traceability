@@ -11,15 +11,12 @@ REM SET ADO_PAT=your-personal-access-token-here
 REM SET JIRA_DATA_FILE=C:\path\to\jira_with_ado.json
 REM SET JIRA_ADO_CONFIG=C:\path\to\config.json
 
-REM Activate virtual environment if you're using one
-REM Uncomment if you have a venv
-REM call venv\Scripts\activate.bat
-
-REM Run the robot
+REM Run the robot using just command
 echo Starting Jira-ADO Traceability Robot...
 echo Timestamp: %date% %time%
+echo.
 
-python jira_ado_traceability_scheduled.py
+just run-scheduled
 
 REM Capture exit code
 SET EXIT_CODE=%ERRORLEVEL%

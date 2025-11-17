@@ -61,10 +61,6 @@ check-cloc:
 check: check-noqa lint typecheck check-cloc
     @echo "[OK] All quality checks passed"
 
-# Run code quality checks and formatting (use after changes)
-dev: format check
-    @echo "[OK] Code formatted and all checks passed"
-
 # Clean build artifacts
 clean:
     @powershell -Command "if (Test-Path build) { Remove-Item -Path build -Recurse -Force }"

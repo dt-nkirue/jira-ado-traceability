@@ -41,7 +41,7 @@ class AdoClient:
             print(f"  [FAIL] Failed to fetch ADO-{work_item_id}: HTTP {response.status_code}")
             return self._create_error_work_item(f"HTTP {response.status_code}")
 
-        except Exception as e:
+        except requests.RequestException as e:
             print(f"  [ERROR] Error fetching ADO-{work_item_id}: {e!s}")
             return self._create_error_work_item(f"ERROR: {e!s}")
 
@@ -54,28 +54,29 @@ class AdoClient:
         Returns:
             Parsed AdoWorkItem
         """
-        fields = work_item.get("fields", {})
+        fields: dict[str, Any] = work_item.get("fields", {})
 
         # Handle assigned to field (can be dict or string)
         assigned_to_raw = fields.get("System.AssignedTo", "Unassigned")
+        assigned_to: str
         if isinstance(assigned_to_raw, dict):
-            assigned_to = assigned_to_raw.get("displayName", "Unassigned")
+            assigned_to = str(assigned_to_raw.get("displayName", "Unassigned"))
         else:
             assigned_to = str(assigned_to_raw)
 
         return AdoWorkItem(
             id=str(work_item.get("id", "")),
-            title=fields.get("System.Title", ""),
-            state=fields.get("System.State", ""),
+            title=str(fields.get("System.Title", "")),
+            state=str(fields.get("System.State", "")),
             assigned_to=assigned_to,
-            work_item_type=fields.get("System.WorkItemType", ""),
+            work_item_type=str(fields.get("System.WorkItemType", "")),
             priority=str(fields.get("Microsoft.VSTS.Common.Priority", "")),
             severity=str(fields.get("Microsoft.VSTS.Common.Severity", "")),
-            created_date=fields.get("System.CreatedDate", ""),
-            closed_date=fields.get("Microsoft.VSTS.Common.ClosedDate", ""),
-            resolved_date=fields.get("Microsoft.VSTS.Common.ResolvedDate", ""),
-            area_path=fields.get("System.AreaPath", ""),
-            iteration_path=fields.get("System.IterationPath", ""),
+            created_date=str(fields.get("System.CreatedDate", "")),
+            closed_date=str(fields.get("Microsoft.VSTS.Common.ClosedDate", "")),
+            resolved_date=str(fields.get("Microsoft.VSTS.Common.ResolvedDate", "")),
+            area_path=str(fields.get("System.AreaPath", "")),
+            iteration_path=str(fields.get("System.IterationPath", "")),
         )
 
     def _create_error_work_item(self, error_msg: str) -> AdoWorkItem:
@@ -136,28 +137,38 @@ class AdoClient:
         Returns:
             List of work items with basic info
         """
-        try:
-            wiql_query = {
-                "query": f"""SELECT [System.Id], [System.Title]
-                FROM WorkItems
-                WHERE [System.TeamProject] = '{self.config.ado_project}'
-                AND [System.CreatedDate] >= @Today - {days}
-                ORDER BY [System.CreatedDate] DESC"""
-            }
+        # Validate inputs to prevent injection (WIQL syntax, not SQL)
+        if days < 0:
+            msg = f"Invalid days parameter: {days}"
+            raise ValueError(msg)
 
+        # Project name comes from validated config, escape single quotes for WIQL safety
+        project = self.config.ado_project.replace("'", "''")
+
+        # Build WIQL query using validated parameters
+        query_text = (
+            f"SELECT [System.Id], [System.Title] "
+            f"FROM WorkItems "
+            f"WHERE [System.TeamProject] = '{project}' "
+            f"AND [System.CreatedDate] >= @Today - {days} "
+            f"ORDER BY [System.CreatedDate] DESC"
+        )
+        wiql_query = {"query": query_text}
+
+        try:
             url = f"{self.api_base}/wit/wiql?api-version=5.0"
             response = requests.post(url, auth=self.auth, json=wiql_query, timeout=30)
 
-            if response.status_code == 200:
-                results = response.json()
-                work_item_ids = [str(item["id"]) for item in results.get("workItems", [])]
-                print(f"Found {len(work_item_ids)} ADO work items for potential matching")
-                return self._fetch_work_items_for_fuzzy(work_item_ids[:200])
+            if response.status_code != 200:
+                print(f"Could not fetch ADO work items for fuzzy matching: HTTP {response.status_code}")
+                return []
 
-            print(f"Could not fetch ADO work items for fuzzy matching: HTTP {response.status_code}")
-            return []
+            results = response.json()
+            work_item_ids = [str(item["id"]) for item in results.get("workItems", [])]
+            print(f"Found {len(work_item_ids)} ADO work items for potential matching")
+            return self._fetch_work_items_for_fuzzy(work_item_ids[:200])
 
-        except Exception as e:
+        except requests.RequestException as e:
             print(f"Error during fuzzy matching setup: {e!s}")
             return []
 
@@ -170,7 +181,7 @@ class AdoClient:
         Returns:
             List of work items with id, title, state, type
         """
-        work_items = []
+        work_items: list[dict[str, Any]] = []
 
         for work_item_id in work_item_ids:
             try:
@@ -179,14 +190,16 @@ class AdoClient:
 
                 if response.status_code == 200:
                     work_item = response.json()
-                    fields = work_item.get("fields", {})
-                    work_items.append({
+                    fields: dict[str, Any] = work_item.get("fields", {})
+                    work_item_dict: dict[str, Any] = {
                         "id": work_item_id,
-                        "title": fields.get("System.Title", ""),
-                        "state": fields.get("System.State", ""),
-                        "work_item_type": fields.get("System.WorkItemType", ""),
-                    })
-            except Exception:
+                        "title": str(fields.get("System.Title", "")),
+                        "state": str(fields.get("System.State", "")),
+                        "work_item_type": str(fields.get("System.WorkItemType", "")),
+                    }
+                    work_items.append(work_item_dict)
+            except requests.RequestException as e:
+                print(f"  [WARN] Skipping work item {work_item_id}: {e!s}")
                 continue
 
         return work_items
