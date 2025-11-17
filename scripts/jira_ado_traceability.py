@@ -34,15 +34,8 @@ def main() -> None:
     print("=" * 60)
     print()
 
-    # Configuration (hardcoded for backward compatibility)
-    config = create_manual_config(
-        ado_server="http://tfsserver:8080/tfs",
-        ado_collection="YourCollection",
-        ado_project="YourProject",
-        ado_pat="your-ado-personal-access-token",
-        jira_data_file=r"C:\Users\nkirue\AI-Playarea\jira_with_ado.json",
-        output_file=r"C:\Users\nkirue\AI-Playarea\Jira_ADO_Traceability_Report.xlsx",
-    )
+    # Configuration (loads from .env file or environment variables)
+    config = create_manual_config()
 
     # Load and parse Jira issues
     print("Loading Jira data...")

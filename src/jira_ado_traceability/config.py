@@ -4,7 +4,12 @@ import json
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 from jira_ado_traceability.models import Config
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 def load_config_from_file(config_path: str | Path) -> Config:
@@ -50,26 +55,59 @@ def load_config_from_file(config_path: str | Path) -> Config:
 
 
 def create_manual_config(
-    ado_server: str,
-    ado_collection: str,
-    ado_project: str,
-    ado_pat: str,
-    jira_data_file: str,
-    output_file: str,
+    ado_server: str | None = None,
+    ado_collection: str | None = None,
+    ado_project: str | None = None,
+    ado_pat: str | None = None,
+    jira_data_file: str | None = None,
+    output_file: str | None = None,
 ) -> Config:
     """Create configuration for manual mode.
 
+    Loads from environment variables by default, with optional overrides.
+
     Args:
-        ado_server: ADO server URL
-        ado_collection: ADO collection name
-        ado_project: ADO project name
-        ado_pat: ADO personal access token
-        jira_data_file: Path to Jira data JSON file
-        output_file: Output Excel file path
+        ado_server: ADO server URL (defaults to ADO_SERVER env var)
+        ado_collection: ADO collection name (defaults to ADO_COLLECTION env var)
+        ado_project: ADO project name (defaults to ADO_PROJECT env var)
+        ado_pat: ADO personal access token (defaults to ADO_PAT env var)
+        jira_data_file: Path to Jira data JSON file (defaults to JIRA_INPUT_FILE env var)
+        output_file: Output Excel file path (defaults to OUTPUT_FILE env var)
 
     Returns:
         Config object
+
+    Raises:
+        ValueError: If required environment variables are missing
     """
+    # Load from environment variables with fallbacks
+    ado_server = ado_server or os.getenv("ADO_SERVER")
+    ado_collection = ado_collection or os.getenv("ADO_COLLECTION")
+    ado_project = ado_project or os.getenv("ADO_PROJECT")
+    ado_pat = ado_pat or os.getenv("ADO_PAT")
+    jira_data_file = jira_data_file or os.getenv("JIRA_INPUT_FILE")
+    output_file = output_file or os.getenv("OUTPUT_FILE")
+
+    # Validate required fields
+    if not ado_server:
+        msg = "ADO_SERVER not found in environment variables or parameters"
+        raise ValueError(msg)
+    if not ado_collection:
+        msg = "ADO_COLLECTION not found in environment variables or parameters"
+        raise ValueError(msg)
+    if not ado_project:
+        msg = "ADO_PROJECT not found in environment variables or parameters"
+        raise ValueError(msg)
+    if not ado_pat:
+        msg = "ADO_PAT not found in environment variables or parameters"
+        raise ValueError(msg)
+    if not jira_data_file:
+        msg = "JIRA_INPUT_FILE not found in environment variables or parameters"
+        raise ValueError(msg)
+    if not output_file:
+        msg = "OUTPUT_FILE not found in environment variables or parameters"
+        raise ValueError(msg)
+
     return Config(
         ado_server=ado_server,
         ado_collection=ado_collection,
