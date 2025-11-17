@@ -1,0 +1,145 @@
+[project]
+name = "jira-ado-traceability"
+version = "1.0.0"
+description = "A comprehensive Python tool for generating traceability reports between Jira issues and Azure DevOps work items"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pandas>=2.3.2",
+    "openpyxl>=3.1.0",
+    "requests>=2.31.0",
+    "fuzzywuzzy>=0.18.0",
+    "python-Levenshtein>=0.21.0",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.8.2",
+    "pyright>=1.1.389",
+    "pytest>=8.3.3",
+    "pytest-cov>=6.0.0",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+# Ruff configuration - Focused on style, complexity, and documentation
+[tool.ruff.lint]
+select = [
+  "E4",   # Import formatting
+  "E7",   # Statement formatting
+  "E9",   # Runtime errors
+  "F",    # PyFlakes style errors
+  "B",    # Bugbear: Advanced code quality
+  "D",    # Documentation
+  "I",    # Import sorting
+  "N",    # Naming conventions
+  "Q",    # Quote standardization
+  "C4",   # Comprehension complexity
+  "C901", # McCabe complexity checker
+  "E501", # Line length
+  "UP",   # Python upgrade syntax
+  "RUF",  # Ruff-specific rules
+  "ERA",  # Eradicate (dead code)
+  "PL",   # Pylint
+  "TRY",  # Exception handling
+  "DTZ",  # DateTime issues
+  "S",    # Security issues
+  "BLE",  # Blind except statements
+  "ARG",  # flake8-unused-arguments
+  "SIM",  # flake8-simplify
+  "W",    # pycodestyle warnings
+]
+ignore = [
+  "ANN401",  # Dynamically typed expressions (handled by Pyright)
+  "D203",    # Conflicts with D211
+  "D212",    # Conflicts with D213
+  "D107",    # Missing docstring in __init__
+  "PLR2004", # Magic values in comparisons
+  "TRY003",  # Long exception messages
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+  "S101",
+  "D",
+  "ARG002",
+  "BLE001",
+  "PLW2901",
+  "RUF001",
+  "RUF003",
+] # Allow test-specific patterns
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# Pyright configuration - Focused on type checking and analysis
+[tool.pyright]
+# Enable virtual environment
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.13"
+
+# Exclude patterns
+exclude = [".venv**/*", "**/__pycache__", ".ruff_cache", ".pytest_cache"]
+
+[tool.pyright.analysis]
+autoImportCompletions = true
+diagnosticMode = "workspace"
+typeCheckingMode = "strict"  # Most strict type checking
+
+# Disable checks that Ruff handles
+disableOrganizeImports = true # Use Ruff's import organizer
+reportMissingImports = false
+reportUnusedImport = false
+reportUnusedVariable = false
+
+# Enable strict type checking features
+reportMissingTypeStubs = false            # Don't require stubs for all libs
+reportUnknownParameterType = true
+reportUnknownArgumentType = true
+reportUnknownLambdaType = true
+reportUnknownVariableType = true
+reportUnknownMemberType = true
+reportMissingTypeArgument = true
+reportInvalidTypeVarUse = true
+reportGeneralTypeIssues = true
+reportFunctionMemberAccess = true
+reportPrivateUsage = true
+reportConstantRedefinition = true
+reportIncompatibleMethodOverride = true
+reportIncompatibleVariableOverride = true
+reportOverlappingOverload = true
+reportUndefinedVariable = true
+reportUntypedFunctionDecorator = false    # Allow untyped decorators
+reportUntypedClassDecorator = false
+reportUntypedBaseClass = true
+reportUntypedNamedTuple = true
+reportCallInDefaultInitializer = true
+reportOptionalMemberAccess = false
+reportOptionalSubscript = false
+
+# Pytest configuration
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)s] %(message)s (%(filename)s:%(lineno)s)"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+markers = [
+  "integration: marks tests as integration tests that may require external services",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/jira_ado_traceability"]

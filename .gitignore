@@ -26,6 +26,11 @@ venv/
 ENV/
 env/
 .venv
+env.bak/
+venv.bak/
+
+# UV
+uv.lock
 
 # IDE
 .vscode/
@@ -60,3 +65,13 @@ logs/
 temp/
 tmp/
 *.tmp
+*.temp
+
+# Testing and Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints

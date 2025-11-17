@@ -1,0 +1,38 @@
+# Pre-commit configuration for Jira-ADO Traceability
+# Runs security checks and code quality validation
+
+repos:
+  # Security - Secret Detection with gitleaks
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.28.0
+    hooks:
+      - id: gitleaks
+        name: Detect secrets with gitleaks
+        entry: gitleaks protect --verbose --redact --staged
+        pass_filenames: false
+
+  # Checks (Python)
+  - repo: local
+    hooks:
+      - id: check
+        name: Quality checks (ruff & pyright)
+        entry: powershell -Command "just check"
+        language: system
+        files: ^(scripts|src|tests)/.*\.py$
+        pass_filenames: false
+        verbose: true
+
+      - id: test
+        name: Run tests
+        entry: powershell -Command "just test"
+        language: system
+        files: ^(scripts|src|tests)/.*\.py$
+        pass_filenames: false
+        verbose: true
+
+# Configuration
+default_language_version:
+  python: python3.13
+
+# Require minimum pre-commit version
+minimum_pre_commit_version: "4.3.0"
