@@ -80,15 +80,25 @@ def create_manual_config(
     Raises:
         ValueError: If required environment variables are missing
     """
-    # Load from environment variables with fallbacks
+    # Load ADO config from environment variables with fallbacks
     ado_server = ado_server or os.getenv("ADO_SERVER")
     ado_collection = ado_collection or os.getenv("ADO_COLLECTION")
     ado_project = ado_project or os.getenv("ADO_PROJECT")
     ado_pat = ado_pat or os.getenv("ADO_PAT")
+
+    # Load Jira config from environment variables
+    jira_url = os.getenv("JIRA_URL")
+    jira_username = os.getenv("JIRA_USERNAME")
+    jira_api_token = os.getenv("JIRA_API_TOKEN")
+    jira_project_key = os.getenv("JIRA_PROJECT_KEY")
+    jira_jql = os.getenv("JIRA_JQL")
+
+    # Load file paths and data source
     jira_data_file = jira_data_file or os.getenv("JIRA_INPUT_FILE")
     output_file = output_file or os.getenv("OUTPUT_FILE")
+    data_source = os.getenv("DATA_SOURCE", "FILE")
 
-    # Validate required fields
+    # Validate required ADO fields
     if not ado_server:
         msg = "ADO_SERVER not found in environment variables or parameters"
         raise ValueError(msg)
@@ -101,9 +111,23 @@ def create_manual_config(
     if not ado_pat:
         msg = "ADO_PAT not found in environment variables or parameters"
         raise ValueError(msg)
-    if not jira_data_file:
-        msg = "JIRA_INPUT_FILE not found in environment variables or parameters"
-        raise ValueError(msg)
+
+    # Validate based on data source
+    if data_source == "API":
+        if not jira_url:
+            msg = "JIRA_URL required when DATA_SOURCE=API"
+            raise ValueError(msg)
+        if not jira_username:
+            msg = "JIRA_USERNAME required when DATA_SOURCE=API"
+            raise ValueError(msg)
+        if not jira_api_token:
+            msg = "JIRA_API_TOKEN required when DATA_SOURCE=API"
+            raise ValueError(msg)
+    elif data_source == "FILE":
+        if not jira_data_file:
+            msg = "JIRA_INPUT_FILE required when DATA_SOURCE=FILE"
+            raise ValueError(msg)
+
     if not output_file:
         msg = "OUTPUT_FILE not found in environment variables or parameters"
         raise ValueError(msg)
@@ -113,6 +137,12 @@ def create_manual_config(
         ado_collection=ado_collection,
         ado_project=ado_project,
         ado_pat=ado_pat,
+        jira_url=jira_url,
+        jira_username=jira_username,
+        jira_api_token=jira_api_token,
+        jira_project_key=jira_project_key,
+        jira_jql=jira_jql,
         jira_data_file=jira_data_file,
         output_file=output_file,
+        data_source=data_source,
     )

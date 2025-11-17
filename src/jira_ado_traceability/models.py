@@ -56,12 +56,25 @@ class FuzzyMatch(TypedDict):
 class Config:
     """Configuration for Jira-ADO traceability."""
 
+    # ADO Configuration
     ado_server: str
     ado_collection: str
     ado_project: str
     ado_pat: str
+
+    # Jira Configuration
+    jira_url: str | None = None
+    jira_username: str | None = None
+    jira_api_token: str | None = None
+    jira_project_key: str | None = None
+    jira_jql: str | None = None
+
+    # File Configuration
     jira_data_file: str | None = None
     output_file: str | None = None
+    data_source: str = "FILE"  # "API" or "FILE"
+
+    # Matching Configuration
     fuzzy_match_threshold: int = 70
     fuzzy_match_limit: int = 5
     ado_scan_days: int = 90
