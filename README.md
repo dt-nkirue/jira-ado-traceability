@@ -53,32 +53,58 @@ just dev-setup
 
 ### Configuration
 
+The tool supports two modes: **API Mode** (real-time data fetching) and **File Mode** (static JSON data).
+
 #### Option 1: API Mode (Recommended - Real-time Data)
 
-Set environment variables for real-time Jira/ADO data fetching:
+**Step 1:** Copy the example environment file:
 
 ```bash
-# Azure DevOps
-export ADO_SERVER="http://tfsserver:8080/tfs"
-export ADO_COLLECTION="YourCollection"
-export ADO_PROJECT="YourProject"
-export ADO_PAT="your-ado-personal-access-token"
+# Linux/Mac
+cp .env.example .env
 
-# Jira Cloud API
-export DATA_SOURCE="API"
-export JIRA_URL="https://yourcompany.atlassian.net"
-export JIRA_USERNAME="your-email@company.com"
-export JIRA_API_TOKEN="your-jira-api-token"
-export JIRA_PROJECT_KEY="PROJ"
-export JIRA_JQL="project=PROJ AND created >= -90d"
+# Windows (PowerShell)
+Copy-Item .env.example .env
+```
+
+**Step 2:** Edit `.env` and fill in your credentials:
+
+```bash
+# Jira Configuration
+JIRA_URL=https://your-company.atlassian.net
+JIRA_USERNAME=your.email@company.com
+JIRA_API_TOKEN=your-jira-api-token-here
+JIRA_PROJECT_KEY=YOUR_PROJECT
+JIRA_JQL=project = YOUR_PROJECT AND resolution = Unresolved
+
+# Azure DevOps Configuration
+ADO_SERVER=http://tfsserver:8080/tfs
+ADO_COLLECTION=YourCollection
+ADO_PROJECT=YourProject
+ADO_PAT=your-ado-personal-access-token
+
+# Data Source Mode
+DATA_SOURCE=API
 
 # Output
-export OUTPUT_FILE="reports/Jira_ADO_Traceability_Report.xlsx"
+OUTPUT_FILE=reports/Jira_ADO_Traceability_Report.xlsx
 ```
+
+**Note:** The `.env` file is automatically loaded by the tool. You don't need to manually export environment variables.
 
 #### Option 2: File Mode (For Testing with Static Data)
 
-Create a `config.json` file:
+**Step 1:** Copy the example config file:
+
+```bash
+# Linux/Mac
+cp config.example.json config.json
+
+# Windows (PowerShell)
+Copy-Item config.example.json config.json
+```
+
+**Step 2:** Edit `config.json` and configure your settings:
 
 ```json
 {
@@ -89,19 +115,22 @@ Create a `config.json` file:
   "output_file": "reports/Jira_ADO_Traceability_Report.xlsx",
   "fuzzy_match_threshold": 70,
   "fuzzy_match_limit": 5,
-  "ado_scan_days": 90
+  "ado_scan_days": 90,
+  "data_source": "FILE"
 }
 ```
 
-Set ADO PAT environment variable:
+**Step 3:** Set your ADO PAT as an environment variable (or add it to the config):
 
 ```bash
-# Windows
-setx ADO_PAT "your-personal-access-token"
+# Windows (PowerShell)
+$env:ADO_PAT = "your-ado-personal-access-token"
 
 # Linux/Mac
-export ADO_PAT="your-personal-access-token"
+export ADO_PAT="your-ado-personal-access-token"
 ```
+
+**Note:** Credentials in `config.json` can be overridden by environment variables for better security.
 
 ### Usage
 

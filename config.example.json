@@ -1,36 +1,28 @@
 {
-  "ado": {
-    "server": "http://tfsserver:8080/tfs",
-    "collection": "YourCollection",
-    "project": "YourProject",
-    "pat": "your-ado-personal-access-token"
-  },
-  "jira": {
-    "data_file": "C:\\Users\\nkirue\\AI-Playarea\\jira_with_ado.json"
-  },
-  "output": {
-    "report_directory": "C:\\Users\\nkirue\\AI-Playarea\\reports",
-    "report_filename": "Jira_ADO_Traceability_Report_{timestamp}.xlsx"
-  },
-  "fuzzy_matching": {
-    "enabled": true,
-    "min_score": 70,
-    "max_ado_items": 200,
-    "days_lookback": 90
-  },
-  "logging": {
-    "log_directory": "C:\\Users\\nkirue\\AI-Playarea\\logs",
-    "log_level": "INFO"
-  },
-  "notifications": {
-    "enabled": false,
-    "email": {
-      "smtp_server": "smtp.example.com",
-      "smtp_port": 587,
-      "from_address": "reports@example.com",
-      "to_addresses": ["user@example.com"],
-      "username": "smtp_username",
-      "password": "smtp_password"
-    }
-  }
+  "_comment_data_source": "Data source mode: 'API' for real-time fetching or 'FILE' for static JSON",
+  "data_source": "FILE",
+
+  "_comment_ado": "Azure DevOps / TFS Configuration",
+  "ado_server": "http://tfsserver:8080/tfs",
+  "ado_collection": "YourCollection",
+  "ado_project": "YourProject",
+  "ado_pat": "your-ado-personal-access-token",
+
+  "_comment_jira_file": "For FILE mode: Path to Jira JSON data file",
+  "jira_data_file": "path/to/jira_data.json",
+
+  "_comment_jira_api": "For API mode: Jira Cloud API credentials (can also use environment variables)",
+  "jira_url": "https://your-company.atlassian.net",
+  "jira_username": "your.email@company.com",
+  "jira_api_token": "your-jira-api-token-here",
+  "jira_project_key": "YOUR_PROJECT",
+  "jira_jql": "project = YOUR_PROJECT AND resolution = Unresolved",
+
+  "_comment_output": "Output configuration",
+  "output_file": "reports/Jira_ADO_Traceability_Report.xlsx",
+
+  "_comment_fuzzy": "Fuzzy matching configuration",
+  "fuzzy_match_threshold": 70,
+  "fuzzy_match_limit": 5,
+  "ado_scan_days": 90
 }
