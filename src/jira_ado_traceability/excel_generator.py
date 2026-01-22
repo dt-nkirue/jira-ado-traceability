@@ -266,9 +266,11 @@ def _add_status_breakdown(ws: Worksheet, df_matched: pd.DataFrame) -> None:
         ws.append([status, count])
     ws.append([])
 
+    # Filter out empty and error states from ADO breakdown
     ws.append(["ADO State Breakdown (Matched Items)"])
     ws.append(["State", "Count"])
-    for state, count in df_matched["ADO State"].value_counts().items():
+    ado_states = df_matched[df_matched["ADO State"] != ""]["ADO State"]
+    for state, count in ado_states.value_counts().items():
         ws.append([state, count])
     ws.append([])
 
@@ -339,7 +341,7 @@ def generate_excel_report(
     df: pd.DataFrame,
     summary_df: pd.DataFrame,
     fuzzy_matches: list[FuzzyMatch],
-) -> None:
+) -> Path:
     """Generate complete Excel report.
 
     Args:
@@ -347,18 +349,28 @@ def generate_excel_report(
         df: Full traceability DataFrame
         summary_df: Summary statistics DataFrame
         fuzzy_matches: List of fuzzy matches
+
+    Returns:
+        Path to the generated report file
     """
     print("\nGenerating Excel report...")
+
+    # Add timestamp to filename to prevent overwriting
+    output_path = Path(output_file)
+    timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
+    timestamped_filename = f"{output_path.stem}_{timestamp}{output_path.suffix}"
+    timestamped_path = output_path.parent / timestamped_filename
 
     wb = create_workbook()
 
     # Create filtered DataFrames
-    df_mismatches = df[
-        df["Status Comparison"].str.contains("[WARN]", na=False)
-        | df["Severity Comparison"].str.contains("[WARN]", na=False)
-        | df["Assignee Match"].str.contains("[WARN]", na=False)
-    ]
+    # Only include linked items (not "Not Linked") that have actual mismatches
     df_matched = df[df["ADO ID"] != "Not Linked"].copy()
+    df_mismatches = df_matched[
+        df_matched["Status Comparison"].str.contains("[WARN]", na=False)
+        | df_matched["Severity Comparison"].str.contains("[WARN]", na=False)
+        | df_matched["Assignee Match"].str.contains("[WARN]", na=False)
+    ]
     df_unlinked = df[df["ADO ID"] == "Not Linked"]
 
     # Add sheets
@@ -370,6 +382,7 @@ def generate_excel_report(
     add_fuzzy_matches_sheet(wb, fuzzy_matches)
     add_unlinked_issues_sheet(wb, df_unlinked)
 
-    # Save workbook
-    wb.save(str(output_file))
-    print(f"[SUCCESS] Report generated successfully: {output_file}")
+    # Save workbook with timestamped filename
+    wb.save(str(timestamped_path))
+    print(f"[SUCCESS] Report generated successfully: {timestamped_path}")
+    return timestamped_path

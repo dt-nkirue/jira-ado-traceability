@@ -37,13 +37,13 @@ class AdoClient:
             if response.status_code == 200:
                 work_item = response.json()
                 return self._parse_work_item(work_item)
-
-            print(f"  [FAIL] Failed to fetch ADO-{work_item_id}: HTTP {response.status_code}")
-            return self._create_error_work_item(f"HTTP {response.status_code}")
-
+            else:
+                # Non-200 status code
+                print(f"  [FAIL] Failed to fetch ADO-{work_item_id}: HTTP {response.status_code}")
+                return None
         except requests.RequestException as e:
             print(f"  [ERROR] Error fetching ADO-{work_item_id}: {e!s}")
-            return self._create_error_work_item(f"ERROR: {e!s}")
+            return None
 
     def _parse_work_item(self, work_item: dict[str, Any]) -> AdoWorkItem:
         """Parse work item response into structured format.
@@ -79,30 +79,6 @@ class AdoClient:
             iteration_path=str(fields.get("System.IterationPath", "")),
         )
 
-    def _create_error_work_item(self, error_msg: str) -> AdoWorkItem:
-        """Create error work item placeholder.
-
-        Args:
-            error_msg: Error message
-
-        Returns:
-            AdoWorkItem with error information
-        """
-        return AdoWorkItem(
-            id="",
-            title=f"ERROR: {error_msg}",
-            state="Error",
-            assigned_to="",
-            work_item_type="",
-            priority="",
-            severity="",
-            created_date="",
-            closed_date="",
-            resolved_date="",
-            area_path="",
-            iteration_path="",
-        )
-
     def fetch_work_items(self, work_item_ids: list[str]) -> dict[str, AdoWorkItem]:
         """Fetch multiple work items from ADO.
 
@@ -123,8 +99,7 @@ class AdoClient:
 
             if item:
                 work_items[work_item_id] = item
-                if item["state"] != "Error":
-                    print(f"  [OK] Successfully fetched ADO-{work_item_id}: {item['state']}")
+                print(f"  [OK] Successfully fetched ADO-{work_item_id}: {item['state']}")
 
         return work_items
 

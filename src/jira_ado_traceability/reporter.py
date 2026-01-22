@@ -16,12 +16,14 @@ def generate_summary_statistics(df: pd.DataFrame) -> pd.DataFrame:
     linked_issues = len(df[df["ADO ID"] != "Not Linked"])
     unlinked_issues = total_issues - linked_issues
 
-    status_mismatches = len(df[df["Status Comparison"].str.contains("[WARN]", na=False)])
-    severity_mismatches = len(df[df["Severity Comparison"].str.contains("[WARN]", na=False)])
-    assignee_mismatches = len(df[df["Assignee Match"].str.contains("[WARN]", na=False)])
+    # Only count mismatches among linked items
+    df_linked = df[df["ADO ID"] != "Not Linked"]
+    status_mismatches = len(df_linked[df_linked["Status Comparison"].str.contains("[WARN]", na=False)])
+    severity_mismatches = len(df_linked[df_linked["Severity Comparison"].str.contains("[WARN]", na=False)])
+    assignee_mismatches = len(df_linked[df_linked["Assignee Match"].str.contains("[WARN]", na=False)])
 
-    both_closed = len(df[df["Status Comparison"] == "[OK] Both Closed"])
-    both_open = len(df[df["Status Comparison"] == "[OK] Both Open"])
+    both_closed = len(df_linked[df_linked["Status Comparison"] == "[OK] Both Closed"])
+    both_open = len(df_linked[df_linked["Status Comparison"] == "[OK] Both Open"])
 
     summary_stats = {
         "Metric": [
@@ -65,9 +67,11 @@ def print_summary(
     linked_issues = len(df[df["ADO ID"] != "Not Linked"])
     unlinked_issues = total_issues - linked_issues
 
-    status_mismatches = len(df[df["Status Comparison"].str.contains("[WARN]", na=False)])
-    severity_mismatches = len(df[df["Severity Comparison"].str.contains("[WARN]", na=False)])
-    assignee_mismatches = len(df[df["Assignee Match"].str.contains("[WARN]", na=False)])
+    # Only count mismatches among linked items
+    df_linked = df[df["ADO ID"] != "Not Linked"]
+    status_mismatches = len(df_linked[df_linked["Status Comparison"].str.contains("[WARN]", na=False)])
+    severity_mismatches = len(df_linked[df_linked["Severity Comparison"].str.contains("[WARN]", na=False)])
+    assignee_mismatches = len(df_linked[df_linked["Assignee Match"].str.contains("[WARN]", na=False)])
 
     # Calculate perfect matches
     df_matched = df[df["ADO ID"] != "Not Linked"]

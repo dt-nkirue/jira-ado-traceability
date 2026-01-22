@@ -100,18 +100,14 @@ class TestFetchWorkItem:
         with patch("requests.get", return_value=mock_response):
             result = ado_client.fetch_work_item("99999")
 
-        assert result is not None
-        assert result["state"] == "Error"
-        assert "HTTP 404" in result["title"]
+        assert result is None
 
     def test_fetch_request_exception(self, ado_client: AdoClient) -> None:
         """Test handling request exception."""
         with patch("requests.get", side_effect=requests.RequestException("Connection error")):
             result = ado_client.fetch_work_item("12345")
 
-        assert result is not None
-        assert result["state"] == "Error"
-        assert "ERROR" in result["title"]
+        assert result is None
 
 
 class TestFetchWorkItems:

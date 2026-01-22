@@ -137,8 +137,8 @@ def main() -> int:
         print("\nGenerating summary statistics...")
         summary_df = generate_summary_statistics(df)
 
-        generate_excel_report(output_file, df, summary_df, fuzzy_matches)
-        print_summary(df, len(fuzzy_matches), str(output_file))
+        actual_output_file = generate_excel_report(output_file, df, summary_df, fuzzy_matches)
+        print_summary(df, len(fuzzy_matches), str(actual_output_file))
 
     except FileNotFoundError as e:
         print(f"\nERROR: {e}")

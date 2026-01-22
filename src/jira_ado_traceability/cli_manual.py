@@ -73,10 +73,10 @@ def main() -> None:
     summary_df = generate_summary_statistics(df)
 
     # Generate Excel report
-    generate_excel_report(config.output_file, df, summary_df, fuzzy_matches)
+    actual_output_file = generate_excel_report(config.output_file, df, summary_df, fuzzy_matches)
 
     # Print summary
-    print_summary(df, len(fuzzy_matches), config.output_file)
+    print_summary(df, len(fuzzy_matches), str(actual_output_file))
 
 
 if __name__ == "__main__":
